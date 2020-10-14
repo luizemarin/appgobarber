@@ -17,6 +17,7 @@ import * as Yup from 'yup';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import getValidationErrors from '../../utils/getValidationErrors';
+import { useAuth } from '../../hooks/AuthContext';
 
 import {
   Container,
@@ -38,35 +39,38 @@ const SignIn: React.FC = () => {
   const navigation = useNavigation();
   const passwordInputRef = useRef<TextInput>(null);
   const formRef = useRef<FormHandles>(null);
+  const { signIn } = useAuth();
 
-  const handleSignIn = useCallback(async (data: SignInFormData) => {
-    try {
-      // eslint-disable-next-line no-unused-expressions
-      formRef.current?.setErrors({});
-      const schema = Yup.object().shape({
-        email: Yup.string()
-          .required('E-mail obrigatório')
-          .email('Digite um e-mail válido'),
-        password: Yup.string().required('Senha obrigatória'),
-      });
-
-      await schema.validate(data, { abortEarly: false });
-      // await signIn({ email: data.email, password: data.password });
-      // history.push('/dashboard');
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        const errors = getValidationErrors(err);
+  const handleSignIn = useCallback(
+    async (data: SignInFormData) => {
+      try {
         // eslint-disable-next-line no-unused-expressions
-        formRef.current?.setErrors(errors);
-        return;
-      }
-    }
+        formRef.current?.setErrors({});
+        const schema = Yup.object().shape({
+          email: Yup.string()
+            .required('E-mail obrigatório')
+            .email('Digite um e-mail válido'),
+          password: Yup.string().required('Senha obrigatória'),
+        });
 
-    Alert.alert(
-      'Erro na autenticação',
-      'Ocorreu erro ao fazer login, cheque as credenciais.',
-    );
-  }, []);
+        await schema.validate(data, { abortEarly: false });
+        await signIn({ email: data.email, password: data.password });
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationErrors(err);
+          // eslint-disable-next-line no-unused-expressions
+          formRef.current?.setErrors(errors);
+          return;
+        }
+      }
+
+      Alert.alert(
+        'Erro na autenticação',
+        'Ocorreu erro ao fazer login, cheque as credenciais.',
+      );
+    },
+    [signIn],
+  );
   return (
     <>
       <KeyboardAvoidingView
